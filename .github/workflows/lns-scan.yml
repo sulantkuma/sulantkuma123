@@ -206,19 +206,24 @@ jobs:
           echo "  Task   : $SAFE_NAME"
           echo "========================================"
 
-          python agent.py --goal "对 ${TARGET} 进行全面的 Web 安全测试，发现漏洞后立即停止" --task-name "${SAFE_NAME}" || true
+          python agent.py \
+            --goal "对 ${TARGET} 进行全面的 Web 安全测试，发现漏洞后立即停止" \
+            --task-name "${SAFE_NAME}" || true
 
       - name: Collect Vulnerability Report
         if: always()
         run: |
           echo "=== Scan Results ==="
-          REPORT=$(find logs/ -maxdepth 2 -name "vulnerability_report.md" 2>/dev/null | head -1)
+          # 匹配 .md 或 .markdown 后缀
+          REPORT=$(find logs/ -maxdepth 2 \( -name "vulnerability_report.md" -o -name "vulnerability_report.markdown" \) 2>/dev/null | head -1)
           if [ -n "$REPORT" ]; then
             echo "Found report: $REPORT"
             echo "--- Report Preview ---"
             cat "$REPORT" | head -100
           else
             echo "No vulnerability report generated"
+            # 列出 logs 目录内容帮助调试
+            find logs/ -maxdepth 3 -type f 2>/dev/null | head -20 || true
           fi
 
       - name: Upload Reports
@@ -228,5 +233,7 @@ jobs:
           name: vuln-reports-${{ github.run_id }}-${{ matrix.target }}
           path: |
             logs/**/vulnerability_report.*
+            logs/**/run_log.json
+            logs/**/metrics.json
           if-no-files-found: ignore
           retention-days: 7
