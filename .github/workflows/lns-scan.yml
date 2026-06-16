@@ -1,4 +1,4 @@
-name: scan
+name: scan1122
 
 on:
   workflow_dispatch:
